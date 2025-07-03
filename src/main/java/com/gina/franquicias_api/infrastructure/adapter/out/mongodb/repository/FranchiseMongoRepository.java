@@ -1,6 +1,6 @@
-package com.gina.franquicias_api.infrastructure.adapter.out.mogodb.repository;
+package com.gina.franquicias_api.infrastructure.adapter.out.mongodb.repository;
 
-import com.gina.franquicias_api.infrastructure.adapter.out.mogodb.entity.FranchiseDocument;
+import com.gina.franquicias_api.infrastructure.adapter.out.mongodb.entity.FranchiseDocument;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
 

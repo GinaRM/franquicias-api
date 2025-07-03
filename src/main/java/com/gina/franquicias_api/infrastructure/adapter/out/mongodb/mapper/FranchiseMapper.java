@@ -1,7 +1,7 @@
-package com.gina.franquicias_api.infrastructure.adapter.out.mogodb.mapper;
+package com.gina.franquicias_api.infrastructure.adapter.out.mongodb.mapper;
 
 import com.gina.franquicias_api.domain.model.Franchise;
-import com.gina.franquicias_api.infrastructure.adapter.out.mogodb.entity.FranchiseDocument;
+import com.gina.franquicias_api.infrastructure.adapter.out.mongodb.entity.FranchiseDocument;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;

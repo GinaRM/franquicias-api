@@ -6,4 +6,5 @@ import reactor.core.publisher.Mono;
 public interface FranchiseService {
     Mono<Franchise> createFranchise(String name);
     Mono<Franchise> addBranch(String franchiseId, String branchName);
+
 }
