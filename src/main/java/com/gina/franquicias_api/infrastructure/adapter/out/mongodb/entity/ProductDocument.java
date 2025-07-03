@@ -1,4 +1,4 @@
-package com.gina.franquicias_api.infrastructure.adapter.out.mogodb.entity;
+package com.gina.franquicias_api.infrastructure.adapter.out.mongodb.entity;
 
 public class ProductDocument {
     private String id;

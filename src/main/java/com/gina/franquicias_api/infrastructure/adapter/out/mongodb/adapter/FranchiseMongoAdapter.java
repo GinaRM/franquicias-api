@@ -1,9 +1,9 @@
-package com.gina.franquicias_api.infrastructure.adapter.out.mogodb.adapter;
+package com.gina.franquicias_api.infrastructure.adapter.out.mongodb.adapter;
 
 import com.gina.franquicias_api.domain.model.Franchise;
 import com.gina.franquicias_api.domain.port.out.FranchiseRepository;
-import com.gina.franquicias_api.infrastructure.adapter.out.mogodb.mapper.FranchiseMapper;
-import com.gina.franquicias_api.infrastructure.adapter.out.mogodb.repository.FranchiseMongoRepository;
+import com.gina.franquicias_api.infrastructure.adapter.out.mongodb.mapper.FranchiseMapper;
+import com.gina.franquicias_api.infrastructure.adapter.out.mongodb.repository.FranchiseMongoRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
