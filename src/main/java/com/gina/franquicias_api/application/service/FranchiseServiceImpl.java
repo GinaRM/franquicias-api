@@ -1,5 +1,7 @@
 package com.gina.franquicias_api.application.service;
 
+import com.gina.franquicias_api.domain.exception.BusinessException;
+import com.gina.franquicias_api.domain.exception.ResourceNotFoundException;
 import com.gina.franquicias_api.domain.model.Branch;
 import com.gina.franquicias_api.domain.model.Franchise;
 import com.gina.franquicias_api.domain.model.Product;
@@ -29,53 +31,79 @@ public class FranchiseServiceImpl implements FranchiseService {
 
     @Override
     public Mono<Franchise> createFranchise(String name) {
-        // inicializa sin sucursales
-        Franchise f = new Franchise(UUID.randomUUID().toString(), name, new ArrayList<>());
-        return repo.save(f)
-                .doOnNext(savedFr -> log.info("Franquicia creada: {} con ID: {}", savedFr.getName(), savedFr.getId()))
-                .doOnError(err -> log.error("Error al crear franquicia: {}", err.getMessage()))
-                .doOnSuccess(savedFr -> log.info("Proceso de creación de franquicia completado"));
+        return repo.findAll()
+                .filter(fr -> fr.getName().equalsIgnoreCase(name))
+                .hasElements()
+                .flatMap(exists -> {
+                    if (exists) {
+                        log.warn("Intento de crear franquicia duplicada con nombre: {}", name);
+                        return Mono.error(new BusinessException("Ya existe una franquicia con el mismo nombre"));
+                    }
+                    Franchise f = new Franchise(UUID.randomUUID().toString(), name, new ArrayList<>());
+                    return repo.save(f)
+                            .doOnNext(savedFr -> log.info("Franquicia creada: {} con ID: {}", savedFr.getName(), savedFr.getId()))
+                            .doOnError(err -> log.error("Error al crear franquicia: {}", err.getMessage()))
+                            .doOnSuccess(savedFr -> log.info("Proceso de creación de franquicia completado"));
+                });
     }
+
+
 
     @Override
     public Mono<Branch> addBranch(String franchiseId, String branchName) {
         return repo.findById(franchiseId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
                 .flatMap(fr -> {
-                    Branch b = new Branch(UUID.randomUUID().toString(), branchName, new ArrayList<>());
+                    boolean exists = fr.getBranches().stream()
+                            .anyMatch(b -> b.getName().equalsIgnoreCase(branchName));
+                    if (exists) {
+                        log.warn("Intento de crear sucursal duplicada con nombre: {} en franquicia: {}", branchName, fr.getName());
+                        return Mono.error(new BusinessException("Ya existe una sucursal con el mismo nombre en la franquicia"));
+                    }
 
-                    List<Branch> mutable = new ArrayList<>(fr.getBranches());
-                    mutable.add(b);
-                    fr.setBranches(mutable);
+                    Branch b = new Branch(UUID.randomUUID().toString(), branchName, new ArrayList<>());
+                    fr.getBranches().add(b);
 
                     return repo.save(fr)
-                            .doOnNext(savedFr -> log.info("Sucursal agregada a franquicia: {}", franchiseId))
+                            .doOnNext(savedFr -> log.info("Sucursal agregada: {} a franquicia: {}", b.getName(), fr.getName()))
                             .doOnError(err -> log.error("Error al agregar sucursal: {}", err.getMessage()))
                             .doOnSuccess(savedFr -> log.info("Proceso de agregar sucursal completado"))
-                            .map(savedFr -> b);
+                            .thenReturn(b);
                 });
     }
+
 
 
 
     @Override
     public Mono<Product> addProduct(String franchiseId, String branchId, String productName, int stock) {
         return repo.findById(franchiseId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
                 .flatMap(fr -> {
                     Branch branch = fr.getBranches().stream()
                             .filter(b -> b.getId().equals(branchId))
                             .findFirst()
-                            .orElseThrow(() -> new RuntimeException("Sucursal no encontrada"));
+                            .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada"));
+
+                    boolean productExists = branch.getProducts().stream()
+                            .anyMatch(p -> p.getName().equalsIgnoreCase(productName));
+                    if (productExists) {
+                        log.warn("Intento de crear producto duplicado con nombre: {} en sucursal: {} de franquicia: {}", productName, branch.getName(), fr.getName());
+                        return Mono.error(new BusinessException("Ya existe un producto con el mismo nombre en esta sucursal"));
+                    }
+
                     Product p = new Product(UUID.randomUUID().toString(), productName, stock);
                     branch.getProducts().add(p);
+
                     return repo.save(fr)
                             .doOnNext(savedFr -> log.info("Producto agregado: {} a sucursal: {}", p.getName(), branch.getName()))
                             .doOnError(err -> log.error("Error al agregar producto: {}", err.getMessage()))
                             .doOnSuccess(savedFr -> log.info("Proceso de agregar producto completado"))
-                            .thenReturn(p); // devuelve el producto agregado, no el branch completo
+                            .thenReturn(p);
                 });
     }
+
+
 
 
     @Override
