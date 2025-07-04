@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 
 public interface FranchiseService {
     Mono<Franchise> createFranchise(String name);
-    Mono<Franchise> addBranch(String franchiseId, String branchName);
+    Mono<Branch> addBranch(String franchiseId, String branchName);
     Mono<Branch>  addProduct(String franchiseId, String branchId, String productName, int stock);
     Mono<Branch>  removeProduct(String franchiseId, String branchId, String productId);
     Mono<Product> updateStock(String franchiseId, String branchId, String productId, int newStock);

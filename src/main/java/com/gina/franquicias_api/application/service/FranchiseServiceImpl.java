@@ -30,14 +30,17 @@ public class FranchiseServiceImpl implements FranchiseService {
     }
 
     @Override
-    public Mono<Franchise> addBranch(String franchiseId, String branchName) {
+    public Mono<Branch> addBranch(String franchiseId, String branchName) {
         return repo.findById(franchiseId)
-                .flatMap(f -> {
+                .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
+                .flatMap(fr -> {
                     Branch b = new Branch(UUID.randomUUID().toString(), branchName, new ArrayList<>());
-                    f.addBranch(b);     // muta la lista interna
-                    return repo.save(f); // persiste con branch nuevo
+                    fr.getBranches().add(b);
+                    return repo.save(fr)
+                            .map(savedFr -> b);   // aquí devolvemos b en vez de savedFr
                 });
     }
+
 
     @Override
     public Mono<Branch> addProduct(String franchiseId, String branchId, String productName, int stock) {
