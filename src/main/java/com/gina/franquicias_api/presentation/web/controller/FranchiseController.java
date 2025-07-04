@@ -1,9 +1,6 @@
 package com.gina.franquicias_api.presentation.web.controller;
 
-import com.gina.franquicias_api.application.dto.BranchRequestDto;
-import com.gina.franquicias_api.application.dto.BranchResponseDto;
-import com.gina.franquicias_api.application.dto.FranchiseRequestDto;
-import com.gina.franquicias_api.application.dto.FranchiseResponseDto;
+import com.gina.franquicias_api.application.dto.*;
 import com.gina.franquicias_api.application.mapper.FranchiseDtoMapper;
 import com.gina.franquicias_api.domain.model.Branch;
 import com.gina.franquicias_api.domain.port.in.FranchiseService;
@@ -41,4 +38,16 @@ public class FranchiseController {
                 .map(mapper::toResponse)
                 .map(b -> ResponseEntity.status(HttpStatus.CREATED).body(b));
     }
+
+    @PostMapping("/{franchiseId}/branches/{branchId}/products")
+    public Mono<ResponseEntity<ProductResponseDto>> addProduct(
+            @PathVariable String franchiseId,
+            @PathVariable String branchId,
+            @RequestBody ProductRequestDto request) {
+
+        return svc.addProduct(franchiseId, branchId, request.getName(), request.getStock())
+                .map(mapper::toResponse)
+                .map(p -> ResponseEntity.status(HttpStatus.CREATED).body(p));
+    }
+
 }

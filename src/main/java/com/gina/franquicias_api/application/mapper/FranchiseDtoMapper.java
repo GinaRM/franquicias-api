@@ -6,6 +6,7 @@ import com.gina.franquicias_api.application.dto.FranchiseResponseDto;
 import com.gina.franquicias_api.application.dto.ProductResponseDto;
 import com.gina.franquicias_api.domain.model.Branch;
 import com.gina.franquicias_api.domain.model.Franchise;
+import com.gina.franquicias_api.domain.model.Product;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -32,4 +33,9 @@ public class FranchiseDtoMapper {
 
         return new BranchResponseDto(branch.getId(), branch.getName(), products);
     }
+
+    public ProductResponseDto toResponse(Product product) {
+        return new ProductResponseDto(product.getId(), product.getName(), product.getStock());
+    }
+
 }
