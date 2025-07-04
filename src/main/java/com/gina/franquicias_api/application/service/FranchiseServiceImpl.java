@@ -14,10 +14,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class FranchiseServiceImpl implements FranchiseService {
     private final FranchiseRepository repo;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FranchiseServiceImpl.class);
+
 
     public FranchiseServiceImpl(FranchiseRepository repo) {
         this.repo = repo;
@@ -30,7 +34,6 @@ public class FranchiseServiceImpl implements FranchiseService {
         return repo.save(f);
     }
 
-    @Override
     public Mono<Branch> addBranch(String franchiseId, String branchName) {
         return repo.findById(franchiseId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
@@ -42,13 +45,15 @@ public class FranchiseServiceImpl implements FranchiseService {
                     fr.setBranches(mutable);
 
                     return repo.save(fr)
+                            .doOnNext(savedFr -> log.info("Sucursal agregada a franquicia: {}", franchiseId))
+                            .doOnError(err -> log.error("Error al agregar sucursal: {}", err.getMessage()))
+                            .doOnSuccess(savedFr -> log.info("Proceso de agregar sucursal completado"))
                             .map(savedFr -> b);
                 });
     }
 
 
 
-    @Override
     public Mono<Branch> addProduct(String franchiseId, String branchId, String productName, int stock) {
         return repo.findById(franchiseId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
@@ -59,7 +64,11 @@ public class FranchiseServiceImpl implements FranchiseService {
                             .orElseThrow(() -> new RuntimeException("Sucursal no encontrada"));
                     Product p = new Product(UUID.randomUUID().toString(), productName, stock);
                     branch.getProducts().add(p);
-                    return repo.save(fr).thenReturn(branch);
+                    return repo.save(fr)
+                            .doOnNext(savedFr -> log.info("Producto agregado: {} a sucursal: {}", p.getName(), branch.getName()))
+                            .doOnError(err -> log.error("Error agregando producto: {}", err.getMessage()))
+                            .doOnSuccess(savedFr -> log.info("Proceso de agregar producto completado"))
+                            .thenReturn(branch);
                 });
     }
 
