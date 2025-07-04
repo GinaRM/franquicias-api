@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -35,11 +36,16 @@ public class FranchiseServiceImpl implements FranchiseService {
                 .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
                 .flatMap(fr -> {
                     Branch b = new Branch(UUID.randomUUID().toString(), branchName, new ArrayList<>());
-                    fr.getBranches().add(b);
+
+                    List<Branch> mutable = new ArrayList<>(fr.getBranches());
+                    mutable.add(b);
+                    fr.setBranches(mutable);
+
                     return repo.save(fr)
-                            .map(savedFr -> b);   // aquí devolvemos b en vez de savedFr
+                            .map(savedFr -> b);
                 });
     }
+
 
 
     @Override
