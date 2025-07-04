@@ -14,6 +14,8 @@ import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 class FranchiseServiceImplTest {
 
@@ -217,6 +219,38 @@ class FranchiseServiceImplTest {
                 .verify();
     }
 
+    @Test
+    void findMaxStock_shouldReturnMaxProductPerBranch() {
+        // Arrange: franquicia con dos sucursales con productos
+        Product p1 = new Product("p1", "Producto1", 10);
+        Product p2 = new Product("p2", "Producto2", 5);
+        Branch branch1 = new Branch("b1", "Sucursal1", new ArrayList<>(Collections.singletonList(p1)));
+        Branch branch2 = new Branch("b2", "Sucursal2", new ArrayList<>(Collections.singletonList(p2)));
+        Franchise existingFranchise = new Franchise("1", "Franquicia", new ArrayList<>(List.of(branch1, branch2)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(existingFranchise));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.findMaxStock("1"))
+                .expectNextMatches(pwb -> pwb.getBranchName().equals("Sucursal1") && pwb.getProduct() != null && pwb.getProduct().getId().equals("p1"))
+                .expectNextMatches(pwb -> pwb.getBranchName().equals("Sucursal2") && pwb.getProduct() != null && pwb.getProduct().getId().equals("p2"))
+                .verifyComplete();
+    }
+
+    @Test
+    void findMaxStock_shouldFail_whenFranchiseDoesNotExist() {
+        // Arrange: franquicia inexistente
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.empty());
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.findMaxStock("1"))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof com.gina.franquicias_api.domain.exception.ResourceNotFoundException &&
+                                throwable.getMessage().equals("Franquicia no encontrada"))
+                .verify();
+    }
 
 
 }
