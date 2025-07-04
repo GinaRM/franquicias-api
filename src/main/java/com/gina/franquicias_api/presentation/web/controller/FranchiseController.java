@@ -7,6 +7,7 @@ import com.gina.franquicias_api.domain.port.in.FranchiseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -71,6 +72,14 @@ public class FranchiseController {
         return svc.updateStock(franchiseId, branchId, productId, request.getStock())
                 .map(mapper::toResponse)
                 .map(p -> ResponseEntity.ok().body(p));
+    }
+
+    @GetMapping("/{franchiseId}/max-stock")
+    public Flux<ProductWithBranchResponseDto> getMaxStockPerBranch(
+            @PathVariable String franchiseId) {
+
+        return svc.findMaxStock(franchiseId)
+                .map(mapper::toResponse);
     }
 
 
