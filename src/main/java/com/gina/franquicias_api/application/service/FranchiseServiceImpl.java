@@ -34,6 +34,7 @@ public class FranchiseServiceImpl implements FranchiseService {
         return repo.save(f);
     }
 
+    @Override
     public Mono<Branch> addBranch(String franchiseId, String branchName) {
         return repo.findById(franchiseId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
@@ -54,7 +55,8 @@ public class FranchiseServiceImpl implements FranchiseService {
 
 
 
-    public Mono<Branch> addProduct(String franchiseId, String branchId, String productName, int stock) {
+    @Override
+    public Mono<Product> addProduct(String franchiseId, String branchId, String productName, int stock) {
         return repo.findById(franchiseId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
                 .flatMap(fr -> {
@@ -65,12 +67,10 @@ public class FranchiseServiceImpl implements FranchiseService {
                     Product p = new Product(UUID.randomUUID().toString(), productName, stock);
                     branch.getProducts().add(p);
                     return repo.save(fr)
-                            .doOnNext(savedFr -> log.info("Producto agregado: {} a sucursal: {}", p.getName(), branch.getName()))
-                            .doOnError(err -> log.error("Error agregando producto: {}", err.getMessage()))
-                            .doOnSuccess(savedFr -> log.info("Proceso de agregar producto completado"))
-                            .thenReturn(branch);
+                            .thenReturn(p); // devuelve el producto agregado, no el branch completo
                 });
     }
+
 
     @Override
     public Mono<Branch> removeProduct(String franchiseId, String branchId, String productId) {
