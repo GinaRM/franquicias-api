@@ -61,5 +61,17 @@ public class FranchiseController {
                 .map(b -> ResponseEntity.ok().body(b));
     }
 
+    @PatchMapping("/{franchiseId}/branches/{branchId}/products/{productId}/stock")
+    public Mono<ResponseEntity<ProductResponseDto>> updateStock(
+            @PathVariable String franchiseId,
+            @PathVariable String branchId,
+            @PathVariable String productId,
+            @RequestBody UpdateStockRequestDto request) {
+
+        return svc.updateStock(franchiseId, branchId, productId, request.getStock())
+                .map(mapper::toResponse)
+                .map(p -> ResponseEntity.ok().body(p));
+    }
+
 
 }

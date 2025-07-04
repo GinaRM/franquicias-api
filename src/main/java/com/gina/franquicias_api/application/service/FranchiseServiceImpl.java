@@ -132,20 +132,28 @@ public class FranchiseServiceImpl implements FranchiseService {
     @Override
     public Mono<Product> updateStock(String franchiseId, String branchId, String productId, int newStock) {
         return repo.findById(franchiseId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
                 .flatMap(fr -> {
                     Branch branch = fr.getBranches().stream()
                             .filter(b -> b.getId().equals(branchId))
                             .findFirst()
-                            .orElseThrow(() -> new RuntimeException("Sucursal no encontrada"));
-                    Product prod = branch.getProducts().stream()
+                            .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada"));
+
+                    Product product = branch.getProducts().stream()
                             .filter(p -> p.getId().equals(productId))
                             .findFirst()
-                            .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-                    prod.setStock(newStock);
-                    return repo.save(fr).thenReturn(prod);
+                            .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+
+                    product.setStock(newStock);
+
+                    return repo.save(fr)
+                            .doOnNext(savedFr -> log.info("Stock actualizado para producto: {} en sucursal: {}. Nuevo stock: {}", product.getName(), branch.getName(), newStock))
+                            .doOnError(err -> log.error("Error al actualizar stock: {}", err.getMessage()))
+                            .doOnSuccess(savedFr -> log.info("Proceso de actualización de stock completado"))
+                            .thenReturn(product);
                 });
     }
+
 
     @Override
     public Flux<ProductWithBranch> findMaxStock(String franchiseId) {
