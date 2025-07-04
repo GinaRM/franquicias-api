@@ -50,4 +50,16 @@ public class FranchiseController {
                 .map(p -> ResponseEntity.status(HttpStatus.CREATED).body(p));
     }
 
+    @DeleteMapping("/{franchiseId}/branches/{branchId}/products/{productId}")
+    public Mono<ResponseEntity<BranchResponseDto>> removeProduct(
+            @PathVariable String franchiseId,
+            @PathVariable String branchId,
+            @PathVariable String productId) {
+
+        return svc.removeProduct(franchiseId, branchId, productId)
+                .map(mapper::toResponse)
+                .map(b -> ResponseEntity.ok().body(b));
+    }
+
+
 }
