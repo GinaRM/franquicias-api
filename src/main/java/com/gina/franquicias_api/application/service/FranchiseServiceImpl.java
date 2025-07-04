@@ -31,7 +31,10 @@ public class FranchiseServiceImpl implements FranchiseService {
     public Mono<Franchise> createFranchise(String name) {
         // inicializa sin sucursales
         Franchise f = new Franchise(UUID.randomUUID().toString(), name, new ArrayList<>());
-        return repo.save(f);
+        return repo.save(f)
+                .doOnNext(savedFr -> log.info("Franquicia creada: {} con ID: {}", savedFr.getName(), savedFr.getId()))
+                .doOnError(err -> log.error("Error al crear franquicia: {}", err.getMessage()))
+                .doOnSuccess(savedFr -> log.info("Proceso de creación de franquicia completado"));
     }
 
     @Override
@@ -67,6 +70,9 @@ public class FranchiseServiceImpl implements FranchiseService {
                     Product p = new Product(UUID.randomUUID().toString(), productName, stock);
                     branch.getProducts().add(p);
                     return repo.save(fr)
+                            .doOnNext(savedFr -> log.info("Producto agregado: {} a sucursal: {}", p.getName(), branch.getName()))
+                            .doOnError(err -> log.error("Error al agregar producto: {}", err.getMessage()))
+                            .doOnSuccess(savedFr -> log.info("Proceso de agregar producto completado"))
                             .thenReturn(p); // devuelve el producto agregado, no el branch completo
                 });
     }
