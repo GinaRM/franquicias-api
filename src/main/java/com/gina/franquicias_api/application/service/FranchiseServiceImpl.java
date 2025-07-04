@@ -14,11 +14,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+
+
 @Service
 public class FranchiseServiceImpl implements FranchiseService {
     private final FranchiseRepository repo;
@@ -109,19 +108,26 @@ public class FranchiseServiceImpl implements FranchiseService {
     @Override
     public Mono<Branch> removeProduct(String franchiseId, String branchId, String productId) {
         return repo.findById(franchiseId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
                 .flatMap(fr -> {
                     Branch branch = fr.getBranches().stream()
                             .filter(b -> b.getId().equals(branchId))
                             .findFirst()
-                            .orElseThrow(() -> new RuntimeException("Sucursal no encontrada"));
+                            .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada"));
+
                     boolean removed = branch.getProducts().removeIf(p -> p.getId().equals(productId));
                     if (!removed) {
-                        return Mono.error(new RuntimeException("Producto no encontrado en la sucursal"));
+                        return Mono.error(new ResourceNotFoundException("Producto no encontrado en la sucursal"));
                     }
-                    return repo.save(fr).thenReturn(branch);
+
+                    return repo.save(fr)
+                            .doOnNext(savedFr -> log.info("Producto eliminado: {} de sucursal: {}", productId, branch.getName()))
+                            .doOnError(err -> log.error("Error al eliminar producto: {}", err.getMessage()))
+                            .doOnSuccess(savedFr -> log.info("Proceso de eliminación de producto completado"))
+                            .thenReturn(branch);
                 });
     }
+
 
     @Override
     public Mono<Product> updateStock(String franchiseId, String branchId, String productId, int newStock) {
