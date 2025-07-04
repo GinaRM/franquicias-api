@@ -158,16 +158,19 @@ public class FranchiseServiceImpl implements FranchiseService {
     @Override
     public Flux<ProductWithBranch> findMaxStock(String franchiseId) {
         return repo.findById(franchiseId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Franquicia no encontrada")))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
                 .flatMapMany(fr ->
                         Flux.fromIterable(fr.getBranches())
-                                .map(br -> {
-                                    Product max = br.getProducts().stream()
+                                .map(branch -> {
+                                    Product max = branch.getProducts().stream()
                                             .max(Comparator.comparingInt(Product::getStock))
                                             .orElse(null);
-                                    return new ProductWithBranch(br.getName(), max);
+                                    return new ProductWithBranch(branch.getName(), max);
                                 })
-                );
+                )
+                .doOnNext(pwb -> log.info("Producto máximo encontrado en sucursal: {}", pwb.getBranchName()))
+                .doOnError(err -> log.error("Error al obtener productos con mayor stock: {}", err.getMessage()))
+                .doOnComplete(() -> log.info("Proceso de obtención de productos con mayor stock completado"));
     }
 
 
