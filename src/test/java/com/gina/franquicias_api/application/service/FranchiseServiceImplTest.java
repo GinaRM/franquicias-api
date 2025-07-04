@@ -3,6 +3,7 @@ package com.gina.franquicias_api.application.service;
 import com.gina.franquicias_api.domain.exception.BusinessException;
 import com.gina.franquicias_api.domain.model.Branch;
 import com.gina.franquicias_api.domain.model.Franchise;
+import com.gina.franquicias_api.domain.model.Product;
 import com.gina.franquicias_api.domain.port.out.FranchiseRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -98,6 +99,46 @@ class FranchiseServiceImplTest {
                                 throwable.getMessage().equals("Ya existe una sucursal con el mismo nombre en la franquicia"))
                 .verify();
     }
+
+    @Test
+    void addProduct_shouldAddProduct_whenProductNameIsUnique() {
+        // Arrange: franquicia con sucursal sin productos con el mismo nombre
+        Branch existingBranch = new Branch("b1", "Sucursal", new ArrayList<>());
+        Franchise existingFranchise = new Franchise("1", "Franquicia", new ArrayList<>(Collections.singletonList(existingBranch)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(existingFranchise));
+        Mockito.when(franchiseRepository.save(any(Franchise.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.addProduct("1", "b1", "ProductoNuevo", 10))
+                .expectNextMatches(product ->
+                        product.getName().equals("ProductoNuevo") &&
+                                product.getStock() == 10)
+                .verifyComplete();
+
+        Mockito.verify(franchiseRepository).save(any(Franchise.class));
+    }
+
+    @Test
+    void addProduct_shouldFail_whenProductNameAlreadyExists() {
+        // Arrange: franquicia con sucursal que ya tiene el producto
+        Product existingProduct = new Product("p1", "ProductoDuplicado", 5);
+        Branch existingBranch = new Branch("b1", "Sucursal", new ArrayList<>(Collections.singletonList(existingProduct)));
+        Franchise existingFranchise = new Franchise("1", "Franquicia", new ArrayList<>(Collections.singletonList(existingBranch)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(existingFranchise));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.addProduct("1", "b1", "ProductoDuplicado", 10))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof BusinessException &&
+                                throwable.getMessage().equals("Ya existe un producto con el mismo nombre en esta sucursal"))
+                .verify();
+    }
+
 
 
 }
