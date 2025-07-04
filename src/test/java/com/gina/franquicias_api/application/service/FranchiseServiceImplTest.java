@@ -178,6 +178,45 @@ class FranchiseServiceImplTest {
                 .verify();
     }
 
+    @Test
+    void updateStock_shouldUpdateStock_whenProductExists() {
+        // Arrange: franquicia con sucursal y producto existente
+        Product existingProduct = new Product("p1", "ProductoStock", 5);
+        Branch existingBranch = new Branch("b1", "Sucursal", new ArrayList<>(Collections.singletonList(existingProduct)));
+        Franchise existingFranchise = new Franchise("1", "Franquicia", new ArrayList<>(Collections.singletonList(existingBranch)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(existingFranchise));
+        Mockito.when(franchiseRepository.save(any(Franchise.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.updateStock("1", "b1", "p1", 50))
+                .expectNextMatches(product ->
+                        product.getId().equals("p1") &&
+                                product.getStock() == 50)
+                .verifyComplete();
+
+        Mockito.verify(franchiseRepository).save(any(Franchise.class));
+    }
+
+    @Test
+    void updateStock_shouldFail_whenProductDoesNotExist() {
+        // Arrange: franquicia con sucursal sin el producto
+        Branch existingBranch = new Branch("b1", "Sucursal", new ArrayList<>());
+        Franchise existingFranchise = new Franchise("1", "Franquicia", new ArrayList<>(Collections.singletonList(existingBranch)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(existingFranchise));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.updateStock("1", "b1", "pInexistente", 50))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof com.gina.franquicias_api.domain.exception.ResourceNotFoundException &&
+                                throwable.getMessage().equals("Producto no encontrado"))
+                .verify();
+    }
+
 
 
 }
