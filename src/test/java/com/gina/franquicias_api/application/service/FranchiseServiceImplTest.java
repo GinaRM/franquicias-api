@@ -139,6 +139,45 @@ class FranchiseServiceImplTest {
                 .verify();
     }
 
+    @Test
+    void removeProduct_shouldRemoveProduct_whenProductExists() {
+        // Arrange: franquicia con sucursal y producto existente
+        Product existingProduct = new Product("p1", "ProductoAEliminar", 5);
+        Branch existingBranch = new Branch("b1", "Sucursal", new ArrayList<>(Collections.singletonList(existingProduct)));
+        Franchise existingFranchise = new Franchise("1", "Franquicia", new ArrayList<>(Collections.singletonList(existingBranch)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(existingFranchise));
+        Mockito.when(franchiseRepository.save(any(Franchise.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.removeProduct("1", "b1", "p1"))
+                .expectNextMatches(branch ->
+                        branch.getProducts().isEmpty() &&
+                                branch.getName().equals("Sucursal"))
+                .verifyComplete();
+
+        Mockito.verify(franchiseRepository).save(any(Franchise.class));
+    }
+
+    @Test
+    void removeProduct_shouldFail_whenProductDoesNotExist() {
+        // Arrange: franquicia con sucursal sin el producto especificado
+        Branch existingBranch = new Branch("b1", "Sucursal", new ArrayList<>());
+        Franchise existingFranchise = new Franchise("1", "Franquicia", new ArrayList<>(Collections.singletonList(existingBranch)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(existingFranchise));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.removeProduct("1", "b1", "pInexistente"))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof com.gina.franquicias_api.domain.exception.ResourceNotFoundException &&
+                                throwable.getMessage().equals("Producto no encontrado en la sucursal"))
+                .verify();
+    }
+
 
 
 }
