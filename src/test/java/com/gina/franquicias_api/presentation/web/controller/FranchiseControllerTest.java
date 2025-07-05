@@ -145,5 +145,35 @@ class FranchiseControllerTest {
                 .jsonPath("$.name").isEqualTo("Sucursal");
     }
 
+    @Test
+    void updateStock_shouldReturnUpdatedProduct() {
+        // Arrange
+        String franchiseId = "1";
+        String branchId = "b1";
+        String productId = "p1";
+        UpdateStockRequestDto requestDto = new UpdateStockRequestDto(50);
+        Product domainProduct = new Product(productId, "Producto", 50);
+        ProductResponseDto responseDto = new ProductResponseDto(productId, "Producto", 50);
+
+        when(franchiseService.updateStock(franchiseId, branchId, productId, 50))
+                .thenReturn(Mono.just(domainProduct));
+
+        when(mapper.toResponse(any(Product.class)))
+                .thenReturn(responseDto);
+
+        // Act & Assert
+        webTestClient.patch()
+                .uri("/api/franchises/{franchiseId}/branches/{branchId}/products/{productId}/stock",
+                        franchiseId, branchId, productId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.id").isEqualTo(productId)
+                .jsonPath("$.name").isEqualTo("Producto")
+                .jsonPath("$.stock").isEqualTo(50);
+    }
+
 }
 
