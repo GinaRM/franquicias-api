@@ -1,5 +1,7 @@
 package com.gina.franquicias_api.presentation.web.controller;
 
+import com.gina.franquicias_api.application.dto.BranchRequestDto;
+import com.gina.franquicias_api.application.dto.BranchResponseDto;
 import com.gina.franquicias_api.application.dto.FranchiseRequestDto;
 import com.gina.franquicias_api.application.dto.FranchiseResponseDto;
 import com.gina.franquicias_api.application.mapper.FranchiseDtoMapper;
@@ -18,7 +20,7 @@ import java.util.Collections;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-class FranchiseControllerUnitTest {
+class FranchiseControllerTest {
 
     private WebTestClient webTestClient;
     private FranchiseService franchiseService; // mock manual
@@ -64,4 +66,32 @@ class FranchiseControllerUnitTest {
                 .jsonPath("$.id").isEqualTo("1")
                 .jsonPath("$.name").isEqualTo("NuevaFranquicia");
     }
+
+    @Test
+    void addBranch_shouldReturnCreatedBranch() {
+        // Arrange
+        String franchiseId = "1";
+        BranchRequestDto requestDto = new BranchRequestDto("NuevaSucursal");
+        Branch domainBranch = new Branch("b1", "NuevaSucursal", Collections.emptyList());
+        BranchResponseDto responseDto = new BranchResponseDto("b1", "NuevaSucursal", Collections.emptyList());
+
+        when(franchiseService.addBranch(franchiseId, "NuevaSucursal"))
+                .thenReturn(Mono.just(domainBranch));
+
+        when(mapper.toResponse(any(Branch.class)))
+                .thenReturn(responseDto);
+
+        // Act & Assert
+        webTestClient.post()
+                .uri("/api/franchises/{franchiseId}/branches", franchiseId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.id").isEqualTo("b1")
+                .jsonPath("$.name").isEqualTo("NuevaSucursal");
+    }
+
 }
+
