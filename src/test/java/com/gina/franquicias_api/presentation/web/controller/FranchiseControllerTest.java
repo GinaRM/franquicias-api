@@ -1,12 +1,10 @@
 package com.gina.franquicias_api.presentation.web.controller;
 
-import com.gina.franquicias_api.application.dto.BranchRequestDto;
-import com.gina.franquicias_api.application.dto.BranchResponseDto;
-import com.gina.franquicias_api.application.dto.FranchiseRequestDto;
-import com.gina.franquicias_api.application.dto.FranchiseResponseDto;
+import com.gina.franquicias_api.application.dto.*;
 import com.gina.franquicias_api.application.mapper.FranchiseDtoMapper;
 import com.gina.franquicias_api.domain.model.Branch;
 import com.gina.franquicias_api.domain.model.Franchise;
+import com.gina.franquicias_api.domain.model.Product;
 import com.gina.franquicias_api.domain.port.in.FranchiseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,6 +89,34 @@ class FranchiseControllerTest {
                 .expectBody()
                 .jsonPath("$.id").isEqualTo("b1")
                 .jsonPath("$.name").isEqualTo("NuevaSucursal");
+    }
+
+    @Test
+    void addProduct_shouldReturnCreatedProduct() {
+        // Arrange
+        String franchiseId = "1";
+        String branchId = "b1";
+        ProductRequestDto requestDto = new ProductRequestDto("NuevoProducto", 20);
+        Product domainProduct = new Product("p1", "NuevoProducto", 20);
+        ProductResponseDto responseDto = new ProductResponseDto("p1", "NuevoProducto", 20);
+
+        when(franchiseService.addProduct(franchiseId, branchId, "NuevoProducto", 20))
+                .thenReturn(Mono.just(domainProduct));
+
+        when(mapper.toResponse(any(Product.class)))
+                .thenReturn(responseDto);
+
+        // Act & Assert
+        webTestClient.post()
+                .uri("/api/franchises/{franchiseId}/branches/{branchId}/products", franchiseId, branchId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.id").isEqualTo("p1")
+                .jsonPath("$.name").isEqualTo("NuevoProducto")
+                .jsonPath("$.stock").isEqualTo(20);
     }
 
 }
