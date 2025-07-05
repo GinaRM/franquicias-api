@@ -4,8 +4,7 @@ public class ProductWithBranch {
     private String branchName;
     private Product product;
 
-    public ProductWithBranch() {
-    }
+
 
     public ProductWithBranch(String branchName, Product product) {
         this.branchName = branchName;

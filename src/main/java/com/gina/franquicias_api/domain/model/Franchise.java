@@ -22,8 +22,5 @@ public class Franchise {
         this.branches = branches;
     }
 
-    public Franchise addBranch(Branch b) {
-        this.branches.add(b);
-        return this;
-    }
+
 }

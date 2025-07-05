@@ -17,8 +17,5 @@ public class Branch {
     public String getName() { return name; }
     public List<Product> getProducts() { return products; }
 
-    public Branch addProduct(Product p) {
-        products.add(p);
-        return this;
-    }
+
 }
