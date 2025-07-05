@@ -5,12 +5,14 @@ import com.gina.franquicias_api.application.mapper.FranchiseDtoMapper;
 import com.gina.franquicias_api.domain.model.Branch;
 import com.gina.franquicias_api.domain.model.Franchise;
 import com.gina.franquicias_api.domain.model.Product;
+import com.gina.franquicias_api.domain.model.ProductWithBranch;
 import com.gina.franquicias_api.domain.port.in.FranchiseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
@@ -173,6 +175,32 @@ class FranchiseControllerTest {
                 .jsonPath("$.id").isEqualTo(productId)
                 .jsonPath("$.name").isEqualTo("Producto")
                 .jsonPath("$.stock").isEqualTo(50);
+    }
+
+    @Test
+    void getMaxStockPerBranch_shouldReturnProductsWithMaxStock() {
+        // Arrange
+        String franchiseId = "1";
+        ProductWithBranch domainPwb = new ProductWithBranch("Sucursal", new Product("p1", "ProductoMax", 100));
+        ProductResponseDto productDto = new ProductResponseDto("p1", "ProductoMax", 100);
+        ProductWithBranchResponseDto responseDto = new ProductWithBranchResponseDto("Sucursal", productDto);
+
+        when(franchiseService.findMaxStock(franchiseId))
+                .thenReturn(Flux.just(domainPwb));
+
+        when(mapper.toResponse(any(ProductWithBranch.class)))
+                .thenReturn(responseDto);
+
+        // Act & Assert
+        webTestClient.get()
+                .uri("/api/franchises/{franchiseId}/max-stock", franchiseId)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$[0].branchName").isEqualTo("Sucursal")
+                .jsonPath("$[0].product.id").isEqualTo("p1")
+                .jsonPath("$[0].product.name").isEqualTo("ProductoMax")
+                .jsonPath("$[0].product.stock").isEqualTo(100);
     }
 
 }
