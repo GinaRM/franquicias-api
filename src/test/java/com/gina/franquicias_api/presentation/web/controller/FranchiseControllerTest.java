@@ -119,5 +119,31 @@ class FranchiseControllerTest {
                 .jsonPath("$.stock").isEqualTo(20);
     }
 
+    @Test
+    void removeProduct_shouldReturnUpdatedBranch() {
+        // Arrange
+        String franchiseId = "1";
+        String branchId = "b1";
+        String productId = "p1";
+        Branch domainBranch = new Branch(branchId, "Sucursal", Collections.emptyList());
+        BranchResponseDto responseDto = new BranchResponseDto(branchId, "Sucursal", Collections.emptyList());
+
+        when(franchiseService.removeProduct(franchiseId, branchId, productId))
+                .thenReturn(Mono.just(domainBranch));
+
+        when(mapper.toResponse(any(Branch.class)))
+                .thenReturn(responseDto);
+
+        // Act & Assert
+        webTestClient.delete()
+                .uri("/api/franchises/{franchiseId}/branches/{branchId}/products/{productId}",
+                        franchiseId, branchId, productId)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.id").isEqualTo(branchId)
+                .jsonPath("$.name").isEqualTo("Sucursal");
+    }
+
 }
 
