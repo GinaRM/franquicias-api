@@ -1,6 +1,10 @@
 package com.gina.franquicias_api.presentation.web.controller;
 
-import com.gina.franquicias_api.application.dto.*;
+import com.gina.franquicias_api.application.dto.request.*;
+import com.gina.franquicias_api.application.dto.response.BranchResponseDto;
+import com.gina.franquicias_api.application.dto.response.FranchiseResponseDto;
+import com.gina.franquicias_api.application.dto.response.ProductResponseDto;
+import com.gina.franquicias_api.application.dto.response.ProductWithBranchResponseDto;
 import com.gina.franquicias_api.application.mapper.FranchiseDtoMapper;
 import com.gina.franquicias_api.domain.model.Branch;
 import com.gina.franquicias_api.domain.model.Franchise;
@@ -202,6 +206,90 @@ class FranchiseControllerTest {
                 .jsonPath("$[0].product.name").isEqualTo("ProductoMax")
                 .jsonPath("$[0].product.stock").isEqualTo(100);
     }
+
+    @Test
+    void renameFranchise_shouldReturnUpdatedFranchise() {
+        // Arrange
+        String franchiseId = "1";
+        UpdateNameRequestDto requestDto = new UpdateNameRequestDto("FranquiciaNueva");
+        Franchise domainFranchise = new Franchise(franchiseId, "FranquiciaNueva", Collections.emptyList());
+        FranchiseResponseDto responseDto = new FranchiseResponseDto(franchiseId, "FranquiciaNueva", Collections.emptyList());
+
+        when(franchiseService.updateFranchiseName(franchiseId, "FranquiciaNueva"))
+                .thenReturn(Mono.just(domainFranchise));
+
+        when(mapper.toResponse(any(Franchise.class)))
+                .thenReturn(responseDto);
+
+        // Act & Assert
+        webTestClient.patch()
+                .uri("/api/franchises/{franchiseId}", franchiseId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.id").isEqualTo(franchiseId)
+                .jsonPath("$.name").isEqualTo("FranquiciaNueva");
+    }
+
+    @Test
+    void renameBranch_shouldReturnUpdatedBranch() {
+        // Arrange
+        String franchiseId = "1";
+        String branchId = "b1";
+        UpdateNameRequestDto requestDto = new UpdateNameRequestDto("SucursalNueva");
+        Branch domainBranch = new Branch(branchId, "SucursalNueva", Collections.emptyList());
+        BranchResponseDto responseDto = new BranchResponseDto(branchId, "SucursalNueva", Collections.emptyList());
+
+        when(franchiseService.updateBranchName(franchiseId, branchId, "SucursalNueva"))
+                .thenReturn(Mono.just(domainBranch));
+
+        when(mapper.toResponse(any(Branch.class)))
+                .thenReturn(responseDto);
+
+        // Act & Assert
+        webTestClient.patch()
+                .uri("/api/franchises/{franchiseId}/branches/{branchId}", franchiseId, branchId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.id").isEqualTo(branchId)
+                .jsonPath("$.name").isEqualTo("SucursalNueva");
+    }
+
+    @Test
+    void renameProduct_shouldReturnUpdatedProduct() {
+        // Arrange
+        String franchiseId = "1";
+        String branchId = "b1";
+        String productId = "p1";
+        UpdateNameRequestDto requestDto = new UpdateNameRequestDto("ProductoNuevo");
+        Product domainProduct = new Product(productId, "ProductoNuevo", 10);
+        ProductResponseDto responseDto = new ProductResponseDto(productId, "ProductoNuevo", 10);
+
+        when(franchiseService.updateProductName(franchiseId, branchId, productId, "ProductoNuevo"))
+                .thenReturn(Mono.just(domainProduct));
+
+        when(mapper.toResponse(any(Product.class)))
+                .thenReturn(responseDto);
+
+        // Act & Assert
+        webTestClient.patch()
+                .uri("/api/franchises/{franchiseId}/branches/{branchId}/products/{productId}",
+                        franchiseId, branchId, productId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.id").isEqualTo(productId)
+                .jsonPath("$.name").isEqualTo("ProductoNuevo")
+                .jsonPath("$.stock").isEqualTo(10);
+    }
+
 
 }
 

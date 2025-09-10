@@ -79,8 +79,8 @@ class FranchiseServiceImplTest {
         // Act & Assert
         StepVerifier.create(franchiseService.addBranch("1", "NuevaSucursal"))
                 .expectNextMatches(branch ->
-                        branch.getName().equals("NuevaSucursal") &&
-                                branch.getProducts().isEmpty())
+                        branch.name().equals("NuevaSucursal") &&
+                                branch.products().isEmpty())
                 .verifyComplete();
 
         Mockito.verify(franchiseRepository).save(any(Franchise.class));
@@ -156,8 +156,8 @@ class FranchiseServiceImplTest {
         // Act & Assert
         StepVerifier.create(franchiseService.removeProduct("1", "b1", "p1"))
                 .expectNextMatches(branch ->
-                        branch.getProducts().isEmpty() &&
-                                branch.getName().equals("Sucursal"))
+                        branch.products().isEmpty() &&
+                                branch.name().equals("Sucursal"))
                 .verifyComplete();
 
         Mockito.verify(franchiseRepository).save(any(Franchise.class));
@@ -251,6 +251,117 @@ class FranchiseServiceImplTest {
                                 throwable.getMessage().equals("Franquicia no encontrada"))
                 .verify();
     }
+
+    @Test
+    void updateFranchiseName_shouldUpdateName_whenNewNameIsUnique() {
+        // Arrange: franquicia existente con nombre distinto
+        Franchise existing = new Franchise("1", "FranquiciaVieja", new ArrayList<>());
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(existing));
+        Mockito.when(franchiseRepository.findAll())
+                .thenReturn(Flux.just(existing)); // No hay otra con el mismo nombre
+        Mockito.when(franchiseRepository.save(any(Franchise.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.updateFranchiseName("1", "FranquiciaNueva"))
+                .expectNextMatches(fr -> fr.getName().equals("FranquiciaNueva"))
+                .verifyComplete();
+
+        Mockito.verify(franchiseRepository).save(any(Franchise.class));
+    }
+
+    @Test
+    void updateFranchiseName_shouldFail_whenNewNameAlreadyExists() {
+        // Arrange: dos franquicias, una con el nombre que queremos usar
+        Franchise existing = new Franchise("1", "FranquiciaVieja", new ArrayList<>());
+        Franchise other = new Franchise("2", "Duplicada", new ArrayList<>());
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(existing));
+        Mockito.when(franchiseRepository.findAll())
+                .thenReturn(Flux.just(existing, other));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.updateFranchiseName("1", "Duplicada"))
+                .expectErrorMatches(ex -> ex instanceof BusinessException &&
+                        ex.getMessage().equals("Ya existe una franquicia con ese nombre"))
+                .verify();
+    }
+
+    @Test
+    void updateBranchName_shouldUpdateName_whenNewNameIsUnique() {
+        // Arrange
+        Branch branch = new Branch("b1", "SucursalVieja", new ArrayList<>());
+        Franchise franchise = new Franchise("1", "Franquicia", new ArrayList<>(List.of(branch)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(franchise));
+        Mockito.when(franchiseRepository.save(any(Franchise.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.updateBranchName("1", "b1", "SucursalNueva"))
+                .expectNextMatches(b -> b.name().equals("SucursalNueva"))
+                .verifyComplete();
+
+        Mockito.verify(franchiseRepository).save(any(Franchise.class));
+    }
+
+    @Test
+    void updateBranchName_shouldFail_whenNewNameAlreadyExists() {
+        // Arrange
+        Branch branch1 = new Branch("b1", "SucursalVieja", new ArrayList<>());
+        Branch branch2 = new Branch("b2", "SucursalDuplicada", new ArrayList<>());
+        Franchise franchise = new Franchise("1", "Franquicia", new ArrayList<>(List.of(branch1, branch2)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(franchise));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.updateBranchName("1", "b1", "SucursalDuplicada"))
+                .expectErrorMatches(ex -> ex instanceof BusinessException &&
+                        ex.getMessage().equals("Ya existe una sucursal con ese nombre"))
+                .verify();
+    }
+
+    @Test
+    void updateProductName_shouldUpdateName_whenNewNameIsUnique() {
+        // Arrange
+        Product product = new Product("p1", "ProductoViejo", 5);
+        Branch branch = new Branch("b1", "Sucursal", new ArrayList<>(List.of(product)));
+        Franchise franchise = new Franchise("1", "Franquicia", new ArrayList<>(List.of(branch)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(franchise));
+        Mockito.when(franchiseRepository.save(any(Franchise.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.updateProductName("1", "b1", "p1", "ProductoNuevo"))
+                .expectNextMatches(p -> p.getName().equals("ProductoNuevo"))
+                .verifyComplete();
+
+        Mockito.verify(franchiseRepository).save(any(Franchise.class));
+    }
+
+    @Test
+    void updateProductName_shouldFail_whenNewNameAlreadyExists() {
+        // Arrange
+        Product product1 = new Product("p1", "ProductoViejo", 5);
+        Product product2 = new Product("p2", "Duplicado", 10);
+        Branch branch = new Branch("b1", "Sucursal", new ArrayList<>(List.of(product1, product2)));
+        Franchise franchise = new Franchise("1", "Franquicia", new ArrayList<>(List.of(branch)));
+
+        Mockito.when(franchiseRepository.findById("1"))
+                .thenReturn(Mono.just(franchise));
+
+        // Act & Assert
+        StepVerifier.create(franchiseService.updateProductName("1", "b1", "p1", "Duplicado"))
+                .expectErrorMatches(ex -> ex instanceof BusinessException &&
+                        ex.getMessage().equals("Ya existe un producto con ese nombre en la sucursal"))
+                .verify();
+    }
+
 
 
 }
