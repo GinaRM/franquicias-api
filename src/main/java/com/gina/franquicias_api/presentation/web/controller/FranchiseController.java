@@ -1,8 +1,11 @@
 package com.gina.franquicias_api.presentation.web.controller;
 
-import com.gina.franquicias_api.application.dto.*;
+import com.gina.franquicias_api.application.dto.request.*;
+import com.gina.franquicias_api.application.dto.response.BranchResponseDto;
+import com.gina.franquicias_api.application.dto.response.FranchiseResponseDto;
+import com.gina.franquicias_api.application.dto.response.ProductResponseDto;
+import com.gina.franquicias_api.application.dto.response.ProductWithBranchResponseDto;
 import com.gina.franquicias_api.application.mapper.FranchiseDtoMapper;
-import com.gina.franquicias_api.domain.model.Branch;
 import com.gina.franquicias_api.domain.port.in.FranchiseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/franchises")
@@ -81,6 +84,40 @@ public class FranchiseController {
         return svc.findMaxStock(franchiseId)
                 .map(mapper::toResponse);
     }
+
+    @PatchMapping("/{franchiseId}")
+    public Mono<ResponseEntity<FranchiseResponseDto>> renameFranchise(
+            @PathVariable String franchiseId,
+            @RequestBody UpdateNameRequestDto request) {
+
+        return svc.updateFranchiseName(franchiseId, request.getName())
+                .map(mapper::toResponse)
+                .map(ResponseEntity::ok);
+    }
+
+    @PatchMapping("/{franchiseId}/branches/{branchId}")
+    public Mono<ResponseEntity<BranchResponseDto>> renameBranch(
+            @PathVariable String franchiseId,
+            @PathVariable String branchId,
+            @RequestBody UpdateNameRequestDto request) {
+
+        return svc.updateBranchName(franchiseId, branchId, request.getName())
+                .map(mapper::toResponse)
+                .map(ResponseEntity::ok);
+    }
+
+    @PatchMapping("/{franchiseId}/branches/{branchId}/products/{productId}")
+    public Mono<ResponseEntity<ProductResponseDto>> renameProduct(
+            @PathVariable String franchiseId,
+            @PathVariable String branchId,
+            @PathVariable String productId,
+            @RequestBody UpdateNameRequestDto request) {
+
+        return svc.updateProductName(franchiseId, branchId, productId, request.getName())
+                .map(mapper::toResponse)
+                .map(ResponseEntity::ok);
+    }
+
 
 
 }

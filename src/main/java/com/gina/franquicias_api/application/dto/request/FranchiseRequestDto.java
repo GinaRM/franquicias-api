@@ -1,4 +1,4 @@
-package com.gina.franquicias_api.application.dto;
+package com.gina.franquicias_api.application.dto.request;
 
 public class FranchiseRequestDto {
     private String name;

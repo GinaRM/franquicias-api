@@ -54,7 +54,7 @@ public class FranchiseServiceImpl implements FranchiseService {
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
                 .flatMap(fr -> {
                     boolean exists = fr.getBranches().stream()
-                            .anyMatch(b -> b.getName().equalsIgnoreCase(branchName));
+                            .anyMatch(b -> b.name().equalsIgnoreCase(branchName));
                     if (exists) {
                         log.warn("Intento de crear sucursal duplicada con nombre: {} en franquicia: {}", branchName, fr.getName());
                         return Mono.error(new BusinessException("Ya existe una sucursal con el mismo nombre en la franquicia"));
@@ -64,7 +64,7 @@ public class FranchiseServiceImpl implements FranchiseService {
                     fr.getBranches().add(b);
 
                     return repo.save(fr)
-                            .doOnNext(savedFr -> log.info("Sucursal agregada: {} a franquicia: {}", b.getName(), fr.getName()))
+                            .doOnNext(savedFr -> log.info("Sucursal agregada: {} a franquicia: {}", b.name(), fr.getName()))
                             .doOnError(err -> log.error("Error al agregar sucursal: {}", err.getMessage()))
                             .doOnSuccess(savedFr -> log.info("Proceso de agregar sucursal completado"))
                             .thenReturn(b);
@@ -80,22 +80,22 @@ public class FranchiseServiceImpl implements FranchiseService {
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
                 .flatMap(fr -> {
                     Branch branch = fr.getBranches().stream()
-                            .filter(b -> b.getId().equals(branchId))
+                            .filter(b -> b.id().equals(branchId))
                             .findFirst()
                             .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada"));
 
-                    boolean productExists = branch.getProducts().stream()
+                    boolean productExists = branch.products().stream()
                             .anyMatch(p -> p.getName().equalsIgnoreCase(productName));
                     if (productExists) {
-                        log.warn("Intento de crear producto duplicado con nombre: {} en sucursal: {} de franquicia: {}", productName, branch.getName(), fr.getName());
+                        log.warn("Intento de crear producto duplicado con nombre: {} en sucursal: {} de franquicia: {}", productName, branch.name(), fr.getName());
                         return Mono.error(new BusinessException("Ya existe un producto con el mismo nombre en esta sucursal"));
                     }
 
                     Product p = new Product(UUID.randomUUID().toString(), productName, stock);
-                    branch.getProducts().add(p);
+                    branch.products().add(p);
 
                     return repo.save(fr)
-                            .doOnNext(savedFr -> log.info("Producto agregado: {} a sucursal: {}", p.getName(), branch.getName()))
+                            .doOnNext(savedFr -> log.info("Producto agregado: {} a sucursal: {}", p.getName(), branch.name()))
                             .doOnError(err -> log.error("Error al agregar producto: {}", err.getMessage()))
                             .doOnSuccess(savedFr -> log.info("Proceso de agregar producto completado"))
                             .thenReturn(p);
@@ -111,17 +111,17 @@ public class FranchiseServiceImpl implements FranchiseService {
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
                 .flatMap(fr -> {
                     Branch branch = fr.getBranches().stream()
-                            .filter(b -> b.getId().equals(branchId))
+                            .filter(b -> b.id().equals(branchId))
                             .findFirst()
                             .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada"));
 
-                    boolean removed = branch.getProducts().removeIf(p -> p.getId().equals(productId));
+                    boolean removed = branch.products().removeIf(p -> p.getId().equals(productId));
                     if (!removed) {
                         return Mono.error(new ResourceNotFoundException("Producto no encontrado en la sucursal"));
                     }
 
                     return repo.save(fr)
-                            .doOnNext(savedFr -> log.info("Producto eliminado: {} de sucursal: {}", productId, branch.getName()))
+                            .doOnNext(savedFr -> log.info("Producto eliminado: {} de sucursal: {}", productId, branch.name()))
                             .doOnError(err -> log.error("Error al eliminar producto: {}", err.getMessage()))
                             .doOnSuccess(savedFr -> log.info("Proceso de eliminación de producto completado"))
                             .thenReturn(branch);
@@ -135,11 +135,11 @@ public class FranchiseServiceImpl implements FranchiseService {
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
                 .flatMap(fr -> {
                     Branch branch = fr.getBranches().stream()
-                            .filter(b -> b.getId().equals(branchId))
+                            .filter(b -> b.id().equals(branchId))
                             .findFirst()
                             .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada"));
 
-                    Product product = branch.getProducts().stream()
+                    Product product = branch.products().stream()
                             .filter(p -> p.getId().equals(productId))
                             .findFirst()
                             .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
@@ -147,7 +147,7 @@ public class FranchiseServiceImpl implements FranchiseService {
                     product.setStock(newStock);
 
                     return repo.save(fr)
-                            .doOnNext(savedFr -> log.info("Stock actualizado para producto: {} en sucursal: {}. Nuevo stock: {}", product.getName(), branch.getName(), newStock))
+                            .doOnNext(savedFr -> log.info("Stock actualizado para producto: {} en sucursal: {}. Nuevo stock: {}", product.getName(), branch.name(), newStock))
                             .doOnError(err -> log.error("Error al actualizar stock: {}", err.getMessage()))
                             .doOnSuccess(savedFr -> log.info("Proceso de actualización de stock completado"))
                             .thenReturn(product);
@@ -162,16 +162,81 @@ public class FranchiseServiceImpl implements FranchiseService {
                 .flatMapMany(fr ->
                         Flux.fromIterable(fr.getBranches())
                                 .map(branch -> {
-                                    Product max = branch.getProducts().stream()
+                                    Product max = branch.products().stream()
                                             .max(Comparator.comparingInt(Product::getStock))
                                             .orElse(null);
-                                    return new ProductWithBranch(branch.getName(), max);
+                                    return new ProductWithBranch(branch.name(), max);
                                 })
                 )
                 .doOnNext(pwb -> log.info("Producto máximo encontrado en sucursal: {}", pwb.getBranchName()))
                 .doOnError(err -> log.error("Error al obtener productos con mayor stock: {}", err.getMessage()))
                 .doOnComplete(() -> log.info("Proceso de obtención de productos con mayor stock completado"));
     }
+
+    @Override
+    public Mono<Franchise> updateFranchiseName(String franchiseId, String newName) {
+        return repo.findById(franchiseId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
+                .flatMap(existing -> repo.findAll()
+                        .filter(fr -> fr.getName().equalsIgnoreCase(newName) && !fr.getId().equals(franchiseId))
+                        .hasElements()
+                        .flatMap(dup -> {
+                            if (dup) {
+                                return Mono.error(new BusinessException("Ya existe una franquicia con ese nombre"));
+                            }
+                            Franchise updated = new Franchise(existing.getId(), newName, existing.getBranches());
+                            return repo.save(updated);
+                        })
+                );
+    }
+
+    @Override
+    public Mono<Branch> updateBranchName(String franchiseId, String branchId, String newName) {
+        return repo.findById(franchiseId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
+                .flatMap(fr -> {
+                    int idx = -1;
+                    for (int i = 0; i < fr.getBranches().size(); i++) {
+                        if (fr.getBranches().get(i).id().equals(branchId)) { idx = i; break; }
+                    }
+                    if (idx == -1) return Mono.error(new ResourceNotFoundException("Sucursal no encontrada"));
+
+                    boolean exists = fr.getBranches().stream()
+                            .anyMatch(b -> b.name().equalsIgnoreCase(newName) && !b.id().equals(branchId));
+                    if (exists) return Mono.error(new BusinessException("Ya existe una sucursal con ese nombre"));
+
+                    Branch current = fr.getBranches().get(idx);
+                    Branch renamed = new Branch(current.id(), newName, current.products());
+                    fr.getBranches().set(idx, renamed);
+
+                    return repo.save(fr).thenReturn(renamed);
+                });
+    }
+
+    @Override
+    public Mono<Product> updateProductName(String franchiseId, String branchId, String productId, String newName) {
+        return repo.findById(franchiseId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Franquicia no encontrada")))
+                .flatMap(fr -> {
+                    Branch branch = fr.getBranches().stream()
+                            .filter(b -> b.id().equals(branchId))
+                            .findFirst()
+                            .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada"));
+
+                    boolean dup = branch.products().stream()
+                            .anyMatch(p -> p.getName().equalsIgnoreCase(newName) && !p.getId().equals(productId));
+                    if (dup) return Mono.error(new BusinessException("Ya existe un producto con ese nombre en la sucursal"));
+
+                    Product product = branch.products().stream()
+                            .filter(p -> p.getId().equals(productId))
+                            .findFirst()
+                            .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+
+                    product.setName(newName);
+                    return repo.save(fr).thenReturn(product);
+                });
+    }
+
 
 
 }

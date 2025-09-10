@@ -1,6 +1,9 @@
 package com.gina.franquicias_api.application.mapper;
 
-import com.gina.franquicias_api.application.dto.*;
+import com.gina.franquicias_api.application.dto.response.BranchResponseDto;
+import com.gina.franquicias_api.application.dto.response.FranchiseResponseDto;
+import com.gina.franquicias_api.application.dto.response.ProductResponseDto;
+import com.gina.franquicias_api.application.dto.response.ProductWithBranchResponseDto;
 import com.gina.franquicias_api.domain.model.Branch;
 import com.gina.franquicias_api.domain.model.Franchise;
 import com.gina.franquicias_api.domain.model.Product;
@@ -12,9 +15,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class FranchiseDtoMapper {
-    public Franchise toDomain(FranchiseRequestDto dto) {
-        return new Franchise(null, dto.getName(), List.of());
-    }
+
 
     public FranchiseResponseDto toResponse(Franchise franchise) {
         List<BranchResponseDto> branchDtos = franchise.getBranches().stream()
@@ -25,11 +26,11 @@ public class FranchiseDtoMapper {
     }
 
     public BranchResponseDto toResponse(Branch branch) {
-        List<ProductResponseDto> products = branch.getProducts().stream()
+        List<ProductResponseDto> products = branch.products().stream()
                 .map(p -> new ProductResponseDto(p.getId(), p.getName(), p.getStock()))
                 .collect(Collectors.toList());
 
-        return new BranchResponseDto(branch.getId(), branch.getName(), products);
+        return new BranchResponseDto(branch.id(), branch.name(), products);
     }
 
     public ProductResponseDto toResponse(Product product) {

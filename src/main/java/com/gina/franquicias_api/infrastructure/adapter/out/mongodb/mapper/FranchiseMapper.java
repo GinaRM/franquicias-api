@@ -8,7 +8,6 @@ import com.gina.franquicias_api.infrastructure.adapter.out.mongodb.entity.Franch
 import com.gina.franquicias_api.infrastructure.adapter.out.mongodb.entity.ProductDocument;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,10 +21,10 @@ public class FranchiseMapper {
                 f.getBranches().stream()
                         .map(b -> {
                             BranchDocument bd = new BranchDocument();
-                            bd.setId(b.getId());
-                            bd.setName(b.getName());
+                            bd.setId(b.id());
+                            bd.setName(b.name());
                             bd.setProducts(
-                                    b.getProducts().stream()
+                                    b.products().stream()
                                             .map(p -> {
                                                 ProductDocument pd = new ProductDocument();
                                                 pd.setId(p.getId());
