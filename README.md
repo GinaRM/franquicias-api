@@ -39,7 +39,9 @@ El proyecto fue desarrollado siguiendo principios de arquitectura limpia para se
 | DELETE | `/api/franchises/{franchiseId}/branches/{branchId}/products/{productId}`| Eliminar un producto de una sucursal               |
 | PATCH  | `/api/franchises/{franchiseId}/branches/{branchId}/products/{productId}/stock` | Actualizar el stock de un producto         |
 | GET    | `/api/franchises/{franchiseId}/max-stock`                               | Obtener el producto con mayor stock por sucursal   |
-
+| PATCH  | `/api/franchises/{franchiseId}`                                         | Renombrar una franquicia                           |
+| PATCH  | `/api/franchises/{franchiseId}/branches/{branchId}`                     | Renombrar una sucursal                             |
+| PATCH  | `/api/franchises/{franchiseId}/branches/{branchId}/products/{productId}`| Renombrar un producto                              |
 ---
 
 ## 🚀 Cómo usar y desplegar la aplicación localmente
@@ -134,3 +136,4 @@ Las pruebas unitarias cubren todos los servicios y controladores principales con
 - Se utilizan operadores reactivos (`map`, `flatMap`, `switchIfEmpty`) junto con señales (`doOnNext`, `doOnError`, `doOnSuccess`) para implementar un flujo reactivo no bloqueante.
 - Se aplican logs en puntos clave para trazabilidad: creación y eliminación de franquicias, sucursales y productos.
 - La API incluye validación de duplicados: no permite nombres repetidos para franquicias, sucursales ni productos dentro de la misma sucursal.
+- Se añadieron endpoints extra de renombrar franquicia, sucursal y producto como parte de los puntos extra de la prueba técnica.
