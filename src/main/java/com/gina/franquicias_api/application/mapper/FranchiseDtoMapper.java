@@ -26,11 +26,11 @@ public class FranchiseDtoMapper {
     }
 
     public BranchResponseDto toResponse(Branch branch) {
-        List<ProductResponseDto> products = branch.products().stream()
+        List<ProductResponseDto> products = branch.getProducts().stream()
                 .map(p -> new ProductResponseDto(p.getId(), p.getName(), p.getStock()))
                 .collect(Collectors.toList());
 
-        return new BranchResponseDto(branch.id(), branch.name(), products);
+        return new BranchResponseDto(branch.getId(), branch.getName(), products);
     }
 
     public ProductResponseDto toResponse(Product product) {

@@ -1,7 +1,6 @@
 package com.gina.franquicias_api.domain.model;
 
-import lombok.Setter;
-@Setter
+
 public class Product {
     private final String id;
     private String name;
@@ -16,5 +15,13 @@ public class Product {
     public String getId()   { return id; }
     public String getName() { return name; }
     public int getStock()   { return stock; }
+
+    public void rename(String newName) {
+        this.name = newName;
+    }
+
+    public void updateStock(int newStock) {
+        this.stock = newStock;
+    }
 
 }

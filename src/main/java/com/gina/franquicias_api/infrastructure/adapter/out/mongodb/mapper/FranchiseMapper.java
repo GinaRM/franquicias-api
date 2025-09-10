@@ -21,10 +21,10 @@ public class FranchiseMapper {
                 f.getBranches().stream()
                         .map(b -> {
                             BranchDocument bd = new BranchDocument();
-                            bd.setId(b.id());
-                            bd.setName(b.name());
+                            bd.setId(b.getId());
+                            bd.setName(b.getName());
                             bd.setProducts(
-                                    b.products().stream()
+                                    b.getProducts().stream()
                                             .map(p -> {
                                                 ProductDocument pd = new ProductDocument();
                                                 pd.setId(p.getId());

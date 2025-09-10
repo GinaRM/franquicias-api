@@ -79,8 +79,8 @@ class FranchiseServiceImplTest {
         // Act & Assert
         StepVerifier.create(franchiseService.addBranch("1", "NuevaSucursal"))
                 .expectNextMatches(branch ->
-                        branch.name().equals("NuevaSucursal") &&
-                                branch.products().isEmpty())
+                        branch.getName().equals("NuevaSucursal") &&
+                                branch.getProducts().isEmpty())
                 .verifyComplete();
 
         Mockito.verify(franchiseRepository).save(any(Franchise.class));
@@ -156,12 +156,13 @@ class FranchiseServiceImplTest {
         // Act & Assert
         StepVerifier.create(franchiseService.removeProduct("1", "b1", "p1"))
                 .expectNextMatches(branch ->
-                        branch.products().isEmpty() &&
-                                branch.name().equals("Sucursal"))
+                        branch.getProducts().isEmpty() &&
+                                branch.getName().equals("Sucursal"))
                 .verifyComplete();
 
         Mockito.verify(franchiseRepository).save(any(Franchise.class));
     }
+
 
     @Test
     void removeProduct_shouldFail_whenProductDoesNotExist() {
@@ -301,11 +302,12 @@ class FranchiseServiceImplTest {
 
         // Act & Assert
         StepVerifier.create(franchiseService.updateBranchName("1", "b1", "SucursalNueva"))
-                .expectNextMatches(b -> b.name().equals("SucursalNueva"))
+                .expectNextMatches(b -> b.getName().equals("SucursalNueva"))
                 .verifyComplete();
 
         Mockito.verify(franchiseRepository).save(any(Franchise.class));
     }
+
 
     @Test
     void updateBranchName_shouldFail_whenNewNameAlreadyExists() {
